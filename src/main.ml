@@ -1,10 +1,9 @@
+open Parser
+open Types
+open Utils
 
-
-
-let read_text_from_file filename =
-  try
-    In_channel.with_open_text
-      filename
-      In_channel.input_all
-  with Sys_error msg ->
-    failwith ("Failed to read from file: " ^ msg)
+let () =
+  let machine_parameters = parse_input_to_machine_params () in
+  log_machine_head machine_parameters;
+  log_machine_transitions machine_parameters.transitions;
+  log_machine_footer ()

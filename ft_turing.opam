@@ -1,0 +1,12 @@
+opam-version: "2.0"
+name: "ft_turing"
+version: "0.1"
+synopsis: "Turing machine implementation in OCaml"
+maintainer: "you@example.com"
+authors: ["Your Name"]
+license: "UNLICENSED"
+depends: [
+  "ocaml" {>= "4.14.0"}
+  "yojson"
+  "ocamlfind"
+]

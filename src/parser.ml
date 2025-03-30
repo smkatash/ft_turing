@@ -1,33 +1,7 @@
 open Arg
 open Yojson.Basic
 open Yojson.Basic.Util
-
-type turing_arguments = { jsonfile: string; input: string }
-
-type action_direction = 
-  | RIGHT
-  | LEFT
-
-type state_transition_operation = {
-  read: string;
-  to_state: string;
-  write: string;  
-  action: action_direction
-}
-
-module StringMap = Map.Make(String)
-
-type machine_parameters = {
-  name: string;
-  alphabet: string list;
-  blank: string;
-  states: string list;
-  initial: string;
-  finals: string list;
-  transitions: state_transition_operation list StringMap.t; 
-}
-
-exception InvalidInputSchema of string
+open Types
 
 (* Define usage message *)
 let usage_msg = "usage: ft_turing [-h] jsonfile input\n\n
@@ -42,23 +16,18 @@ let error_msg = "Invalid input\n
 usage: ft_turing [-h] jsonfile input"
 
 (* Function to check command-line arguments and display usage if needed *)
-let parse_input () =
+let parse_input_args () =
   let args_len = Array.length Sys.argv in
-  if args_len = 2 && (Sys.argv.(1) = "-h" || Sys.argv.(1) = "-help") then
-    begin
-      print_endline usage_msg;
-      exit 0
-    end
+  if args_len = 2 && (Sys.argv.(1) = "-h" || Sys.argv.(1) = "--help") then
+    (print_endline usage_msg; exit 0)
   else if args_len = 3 then
-    begin
-      let parsed_arguments = {jsonfile=Sys.argv.(1);input = Sys.argv.(2)} in
+    let parsed_arguments = {jsonfile= String.trim Sys.argv.(1);input = String.trim Sys.argv.(2)} in
+    if String.length parsed_arguments.jsonfile <> 0  && String.length parsed_arguments.input <> 0 then
       parsed_arguments
-    end
+    else
+        (print_endline usage_msg; exit 1)
   else
-    begin
-      print_endline error_msg;
-      exit 1
-    end
+    (print_endline usage_msg; exit 1)
     
 let get_valid_json_format_data_from_file args = 
   let file_path = args.jsonfile in
@@ -82,7 +51,6 @@ let extract_json_data json_data =
   let alphabet =
     let alphabet_json = Util.member "alphabet" json_data |> Util.to_list in
     let alphabet_list = List.map Util.to_string alphabet_json in
-    Printf.printf "Extracted alphabet: %s\n" (String.concat ", " alphabet_list);
 
     (* Check that each element of alphabet is a string of length 1 *)
     let invalid_chars = List.filter (fun char -> String.length char <> 1) alphabet_list in
@@ -192,9 +160,7 @@ let extract_json_data json_data =
     ) (StringMap.empty, []) transitions_object  |> fst
     in
     (* Return the final result as a record *)
-  { name; alphabet; blank; states; initial; finals; transitions }
-    
-
+    { name; alphabet; blank; states; initial; finals; transitions }
 
 let check_for_duplicate_values json_data =
   let json_list = to_assoc json_data in
@@ -273,10 +239,8 @@ let print_machine_parameters args =
   print_transitions args.transitions
 
 
-
-let () =
-  let parsed_arguments = parse_input () in
-  print_endline ("jsonfile: " ^ parsed_arguments.jsonfile);
-  print_endline ("input: " ^ parsed_arguments.input);
+let parse_input_to_machine_params () =
+  let parsed_arguments = parse_input_args () in
   let args = parse_machine_parameters parsed_arguments in
-  print_machine_parameters args
+  args
+
