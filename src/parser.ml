@@ -51,12 +51,12 @@ let extract_json_data json_data =
   let alphabet =
     let alphabet_json = Util.member "alphabet" json_data |> Util.to_list in
     let alphabet_list = List.map Util.to_string alphabet_json in
-
     (* Check that each element of alphabet is a string of length 1 *)
     let invalid_chars = List.filter (fun char -> String.length char <> 1) alphabet_list in
     if invalid_chars <> [] then
       raise (InvalidInputSchema (Printf.sprintf "Invalid alphabet symbols: %s" (String.concat ", " invalid_chars)));
-    alphabet_list
+      let alphabet_char_list = List.flatten (List.map (fun str -> List.of_seq (String.to_seq str)) alphabet_list) in
+      alphabet_char_list
   in
   
   (* Extract blank *)
@@ -109,20 +109,33 @@ let extract_json_data json_data =
   
   (* Function to parse transition operations *)
   let parse_transition_operation seen_reads transition_operation =
-    let read = Util.member "read" transition_operation |> Util.to_string in
+    let read = 
+      let str = Util.member "read" transition_operation |> Util.to_string in
+      if String.length str > 0 then
+        str.[0]
+      else
+        raise (InvalidInputSchema (Printf.sprintf "Invalid read symbol: %s" str))
+      in
     let to_state = Util.member "to_state" transition_operation |> Util.to_string in
-    let write = Util.member "write" transition_operation |> Util.to_string in
+    
+    let write = 
+      let str = Util.member "write" transition_operation |> Util.to_string in
+      if String.length str > 0 then
+        str.[0]
+      else
+        raise (InvalidInputSchema (Printf.sprintf "Invalid write symbol: %s" str))
+      in
     let action_str = Util.member "action" transition_operation |> Util.to_string in
     
     (* Validate read, write, and to_state *)
     if not (is_valid_alphabet read) then
-      raise (InvalidInputSchema (Printf.sprintf "Invalid read symbol: %s" read))
+      raise (InvalidInputSchema (Printf.sprintf "Invalid read symbol: %c" read))
     else if not (is_valid_alphabet write) then
-      raise (InvalidInputSchema (Printf.sprintf "Invalid write symbol: %s" write))
+      raise (InvalidInputSchema (Printf.sprintf "Invalid write symbol: %c" write))
     else if not (is_valid_state to_state) then
       raise (InvalidInputSchema (Printf.sprintf "Invalid state: %s" to_state))
     else if List.mem read seen_reads then
-      raise (InvalidInputSchema (Printf.sprintf "Duplicate read symbol: %s" read))
+      raise (InvalidInputSchema (Printf.sprintf "Duplicate read symbol: %c" read))
     else
       let action =
         match action_str with
@@ -198,7 +211,7 @@ let parse_machine_parameters args =
 
 let print_transition transition =
   (* Assuming `transition` is a record with fields `read`, `to_state`, `write`, and `action` *)
-  Printf.printf "read: %s, to_state: %s, write: %s, action: %s\n"
+  Printf.printf "read: %c, to_state: %s, write: %c, action: %s\n"
     transition.read
     transition.to_state
     transition.write
@@ -216,9 +229,9 @@ let print_transitions transitions_map =
 let print_machine_parameters args =
   print_endline ("name: " ^ args.name);
 
-  (* Print alphabet (array of strings) *)
+  (* Print alphabet (array of chars) *)
   let alphabet_str = 
-    String.concat ", " args.alphabet
+    String.concat ", " (List.map (fun c -> String.make 1 c) args.alphabet)
   in
   print_endline ("alphabet: " ^ alphabet_str);
 

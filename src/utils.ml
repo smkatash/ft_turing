@@ -25,7 +25,7 @@ let log_machine_name name =
 
 let log_machine_alphabet alphabet = 
   let alphabet_str = 
-    String.concat ", " alphabet
+    String.concat ", " (List.map (fun c -> String.make 1 c) alphabet)
   in
   print_endline ("Alphabet: [ " ^ alphabet_str ^ " ]")
   
@@ -53,7 +53,7 @@ let log_machine_head machine_parameters =
 
 (* Function to log a single state transition *)
 let log_state_transition state transition =
-  Printf.printf "(%s, %s) -> (%s, %s, %s)\n"
+  Printf.printf "(%s, %c) -> (%s, %c, %s)\n"
     state
     transition.read
     transition.to_state
@@ -75,5 +75,19 @@ let log_machine_footer () =
   let frame_line = String.make width '*' in
   print_endline frame_line
   
+let log_tape_transition tape transition =
+  let left_str = String.concat "" (List.map (String.make 1) (List.rev tape.left)) in
+  let right_str = String.concat "" (List.map (String.make 1) tape.right) in
+  let head_str = String.make 1 tape.head in
+  let tape_visual = "[" ^ left_str ^ "<" ^ head_str ^ ">" ^ right_str ^ "]" in
 
+  Printf.printf "%s (%s, %c) -> (%s, %c, %s)\n"
+    tape_visual
+    tape.state
+    transition.read
+    transition.to_state
+    transition.write
+    (match transition.action with
+      | LEFT -> "LEFT"
+      | RIGHT -> "RIGHT")
 

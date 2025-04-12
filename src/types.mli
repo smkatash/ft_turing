@@ -1,9 +1,9 @@
 type turing_arguments = { jsonfile : string; input : string; }
 type action_direction = RIGHT | LEFT
 type state_transition_operation = {
-  read : string;
+  read : char;
   to_state : string;
-  write : string;
+  write : char;
   action : action_direction;
 }
 module StringMap :
@@ -57,11 +57,17 @@ module StringMap :
   end
 type machine_parameters = {
   name : string;
-  alphabet : string list;
+  alphabet : char list;
   blank : string;
   states : string list;
   initial : string;
   finals : string list;
   transitions : state_transition_operation list StringMap.t;
+}
+type tape_state = {
+  left : char list;
+  head : char;
+  right : char list;
+  state : string;
 }
 exception InvalidInputSchema of string

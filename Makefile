@@ -4,8 +4,8 @@ NAME				:= ft_turing
 # ================================ Sources =================================== #
 
 VPATH				:= src
-SRC					:= types.ml parser.ml utils.ml main.ml
-SRCI				:= types.mli parser.mli utils.mli main.mli
+SRC					:= types.ml parser.ml utils.ml machine.ml main.ml
+SRCI				:= types.mli parser.mli utils.mli machine.mli main.mli
 
 OCAMLC  		:= ocamlfind ocamlc
 OCAMLOPT		:= ocamlfind ocamlopt
