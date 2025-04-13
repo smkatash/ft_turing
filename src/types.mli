@@ -58,7 +58,7 @@ module StringMap :
 type machine_parameters = {
   name : string;
   alphabet : char list;
-  blank : string;
+  blank : char;
   states : string list;
   initial : string;
   finals : string list;

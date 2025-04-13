@@ -55,30 +55,53 @@ let extract_json_data json_data =
     let invalid_chars = List.filter (fun char -> String.length char <> 1) alphabet_list in
     if invalid_chars <> [] then
       raise (InvalidInputSchema (Printf.sprintf "Invalid alphabet symbols: %s" (String.concat ", " invalid_chars)));
-      let alphabet_char_list = List.flatten (List.map (fun str -> List.of_seq (String.to_seq str)) alphabet_list) in
-      alphabet_char_list
+    let alphabet_char_list = List.flatten (List.map (fun str -> List.of_seq (String.to_seq str)) alphabet_list) in
+    let has_duplicates lst =
+      let sorted = List.sort Char.compare lst in
+      let rec check = function
+        | a :: (b :: _ ) when a = b -> true
+        | _ :: rest -> check rest
+        | [] -> false
+      in
+      check sorted
+    in
+    if has_duplicates alphabet_char_list then
+      raise (InvalidInputSchema "Duplicate symbols found in alphabet");
+    alphabet_char_list
   in
   
+  (* Check if the character is in the alphabet *)
+  let is_valid_alphabet char = 
+    List.mem char alphabet
+  in
+
   (* Extract blank *)
   let blank =
-    match Util.member "blank" json_data |> Util.to_string with
-    | exception _ -> failwith "Missing required field: blank"
-    | b -> b
+    let b = Util.member "blank" json_data |> Util.to_string in
+    if String.length b = 1 && is_valid_alphabet b.[0] then
+      b.[0]
+    else
+      raise (InvalidInputSchema (Printf.sprintf "Invalid blank symbol: %s" b))
   in
-  
+
   (* Extract states *)
   let states =
     let states_json = Util.member "states" json_data |> Util.to_list in
     List.map Util.to_string states_json
   in
   
+  (* Check if to_state is valid *)
+  let is_valid_state to_state = 
+    List.mem to_state states
+  in
+
   (* Extract initial state *)
   let initial =
     match Util.member "initial" json_data |> Util.to_string with
     | exception _ -> failwith "Missing required field: initial"
     | i ->
         (* Check if initial state is in states list *)
-        if List.mem i states then
+        if is_valid_state i then
           i
         else
           raise (InvalidInputSchema (Printf.sprintf "Initial state '" ^ i ^ "' not found in states list"))
@@ -94,18 +117,6 @@ let extract_json_data json_data =
     ) finals_list;
     finals_list
   in
-
-
-  (* Check if to_state is valid *)
-  let is_valid_state to_state = 
-    List.mem to_state states
-  in
-
-  (* Check if the character is in the alphabet *)
-  let is_valid_alphabet char = 
-    List.mem char alphabet
-  in
-
   
   (* Function to parse transition operations *)
   let parse_transition_operation seen_reads transition_operation =
@@ -172,6 +183,7 @@ let extract_json_data json_data =
       (updated_map, new_seen_reads)
     ) (StringMap.empty, []) transitions_object  |> fst
     in
+
     (* Return the final result as a record *)
     { name; alphabet; blank; states; initial; finals; transitions }
 
@@ -219,41 +231,27 @@ let print_transition transition =
     | RIGHT -> "RIGHT"
     | LEFT -> "LEFT")
 
-let print_transitions transitions_map =
-  StringMap.iter (fun state transitions ->
-    (* For each state, print its name and the corresponding transitions *)
-    Printf.printf "State: %s\n" state;
-    List.iter print_transition transitions;
-  ) transitions_map
-
-let print_machine_parameters args =
-  print_endline ("name: " ^ args.name);
-
-  (* Print alphabet (array of chars) *)
-  let alphabet_str = 
-    String.concat ", " (List.map (fun c -> String.make 1 c) args.alphabet)
+let parse_input_tape_state input state = 
+  let explode str =
+    List.init (String.length str) (String.get str)
   in
-  print_endline ("alphabet: " ^ alphabet_str);
-
-
-  (* Print blank *)
-  print_endline ("blank: " ^ args.blank);
-
-  (* Print states (array of strings) *)
-  let states_str = 
-    String.concat ", " args.states
-  in
-  print_endline ("states: " ^ states_str);
-
-  (* Print initial state *)
-  print_endline ("initial: " ^ args.initial);
-  
-  (* Print transitions *)
-  print_transitions args.transitions
-
+  match explode input with
+  | head :: right -> {
+        left = [];
+        head = head;
+        right = right;
+        state = state;
+      }
+  | _ -> {
+    left = [];
+    head = ' ';
+    right = [];
+    state = state;
+  }
 
 let parse_input_to_machine_params () =
   let parsed_arguments = parse_input_args () in
-  let args = parse_machine_parameters parsed_arguments in
-  args
+  let machine_params = parse_machine_parameters parsed_arguments in
+  let initial_tape_state = parse_input_tape_state parsed_arguments.input machine_params.initial in
+  (initial_tape_state, machine_params)
 

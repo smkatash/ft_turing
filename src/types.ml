@@ -16,7 +16,7 @@ module StringMap = Map.Make(String)
 type machine_parameters = {
   name: string;
   alphabet:char list;
-  blank: string;
+  blank: char;
   states: string list;
   initial: string;
   finals: string list;

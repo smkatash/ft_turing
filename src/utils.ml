@@ -42,7 +42,7 @@ let log_machine_finals finals =
   let finals_str = 
     String.concat ", " finals
   in
-  print_endline ("Finals: [" ^ finals_str ^ "]")
+  print_endline ("Finals: [ " ^ finals_str ^ " ]")
 
 let log_machine_head machine_parameters =
   log_machine_name machine_parameters.name;

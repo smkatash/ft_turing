@@ -8,7 +8,6 @@ val check_for_duplicate_values : Yojson.Basic.t -> unit
 val parse_machine_parameters :
   Types.turing_arguments -> Types.machine_parameters
 val print_transition : Types.state_transition_operation -> unit
-val print_transitions :
-  Types.state_transition_operation list Types.StringMap.t -> unit
-val print_machine_parameters : Types.machine_parameters -> unit
-val parse_input_to_machine_params : unit -> Types.machine_parameters
+val parse_input_tape_state : string -> string -> Types.tape_state
+val parse_input_to_machine_params :
+  unit -> Types.tape_state * Types.machine_parameters
