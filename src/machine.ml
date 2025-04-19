@@ -82,7 +82,7 @@ let is_02n input =
   in
   check_zero_counts_modulo_two 0 input
 
-
+  
 let rec run_machine tape machine_parameters =
   let next_transition = get_next_transition tape machine_parameters.transitions in
   (* Apply the transition and move the machine *)
@@ -90,9 +90,21 @@ let rec run_machine tape machine_parameters =
   (* Check if an accepting or rejecting state is reached *)
     if is_halting_state updated_tape.state machine_parameters.finals then
       let full_tape = List.rev (updated_tape.left) @ [updated_tape.head] @ updated_tape.right in
-      let is_palindrome_char = is_palindrome full_tape in
-      let is_0n1n_char = is_0n1n full_tape in
-      let is_02n_char = is_02n full_tape in
+      let remove_blank input blank_symbol =
+        let rec remove aux = function
+          | [] -> List.rev aux
+          | head :: tail ->
+            if head != blank_symbol then
+              remove (head::aux) tail
+            else
+              remove aux tail
+        in
+        remove [] input
+      in
+      let final_input = remove_blank full_tape machine_parameters.blank in
+      let is_palindrome_char = is_palindrome final_input in
+      let is_0n1n_char = is_0n1n final_input in
+      let is_02n_char = is_02n final_input in
       let updated_tape_with_description = { tape with right = tape.right @ [is_palindrome_char] @ [is_0n1n_char] @ [is_02n_char] } in
       log_tape_transition updated_tape_with_description next_transition;
       exit 0
